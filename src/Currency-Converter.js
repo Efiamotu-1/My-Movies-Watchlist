@@ -10,17 +10,33 @@ function Values() {
   const [toCur, setToCur] = useState("USD");
   const [output, setOutput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(
     function () {
       async function convert() {
-        setIsLoading(true);
-        const res = await fetch(
-          `https://api.frankfurter.app/latest?amount=${amount}&from=${fromCur}&to=${toCur}`
-        );
-        const data = await res.json();
-        setOutput(data.rates[toCur]);
-        setIsLoading(false);
+        try {
+          setIsLoading(true);
+          const res = await fetch(
+            `https://api.frankfurter.app/latest?amount=${amount}&from=${fromCur}&to=${toCur}`
+          );
+          // Handling Errors
+          // if (res.status === 404) throw new Error("currency does not exist");
+          if (!res.ok) {
+            throw new Error(
+              "The link is broken or incorrect or your network is down"
+            );
+          }
+          const data = await res.json();
+          console.log(data);
+          // if (data.message === "not found")
+          //   throw new Error("currency does not exist");
+          setOutput(data.rates[toCur]);
+          setIsLoading(false);
+        } catch (err) {
+          console.error(err.message);
+          setErrorMessage(err.message);
+        }
       }
 
       if (fromCur === toCur) return setOutput(amount);
@@ -50,6 +66,7 @@ function Values() {
       </select>
 
       <p>{isLoading ? "...LOADING" : `${output} ${toCur}`}</p>
+      <p>{errorMessage && errorMessage}</p>
     </>
   );
 }
